@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QA Extractor - Просмотр данных</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <!-- Заголовок -->
+        <header class="header">
+            <h1>📊  AI QA Extractor</h1>
+            <p class="subtitle">Извлеченные пары вопрос-ответ из диалогов</p>
+        </header>
+
+        <!-- Статистика -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-value">{{ stats.total_pairs }}</div>
+                <div class="stat-label">Всего пар Q&A</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">{{ stats.client_to_operator }}</div>
+                <div class="stat-label">Клиент → Оператор</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">{{ stats.operator_to_client }}</div>
+                <div class="stat-label">Оператор → Клиент</div>
+            </div>
+            <div class="stat-card stat-card-audit">
+                <div class="stat-value">{{ audited_count }}</div>
+                <div class="stat-label">⭐ Проверено</div>
+            </div>
+        </div>
+
+        <!-- Фильтры и поиск -->
+        <div class="filters-section">
+            <form method="GET" action="/" class="filters-form">
+                <!-- Поиск -->
+                <div class="search-box">
+                    <input 
+                        type="text" 
+                        name="search" 
+                        placeholder="Поиск по вопросам и ответам..." 
+                        value="{{ search }}"
+                        class="search-input"
+                    >
+                    <button type="submit" class="search-btn">🔍 Найти</button>
+                </div>
+
+                <!-- Фильтры -->
+                <div class="filters-row">
+                    <div class="filter-group">
+                        <label>Направление Q&A:</label>
+                        <select name="direction" class="filter-select">
+                            <option value="">Все</option>
+                            <option value="Клиент → Оператор" {% if direction_filter == 'Клиент → Оператор' %}selected{% endif %}>
+                                Клиент → Оператор
+                            </option>
+                            <option value="Оператор → Клиент" {% if direction_filter == 'Оператор → Клиент' %}selected{% endif %}>
+                                Оператор → Клиент
+                            </option>
+                        </select>
+                    </div>
+
+                    <div class="filter-group">
+                        <label>Тип вопроса:</label>
+                        <select name="type" class="filter-select">
+                            <option value="">Все</option>
+                            {% for qtype in question_types %}
+                            <option value="{{ qtype }}" {% if type_filter == qtype %}selected{% endif %}>
+                                {{ qtype }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="filter-group">
+                        <label>Аудит:</label>
+                        <select name="audit" class="filter-select">
+                            <option value="">Все</option>
+                            <option value="yes" {% if audit_filter == 'yes' %}selected{% endif %}>
+                                ✓ Проверено
+                            </option>
+                            <option value="no" {% if audit_filter == 'no' %}selected{% endif %}>
+                                Не проверено
+                            </option>
+                        </select>
+                    </div>
+
+                    <div class="filter-group checkbox-group">
+                        <label class="checkbox-label">
+                            <input 
+                                type="checkbox" 
+                                name="no_pagination" 
+                                {% if no_pagination %}checked{% endif %}
+                            >
+                            <span>Убрать пагинацию</span>
+                        </label>
+                    </div>
+
+                    <button type="submit" class="apply-btn">Применить</button>
+                    <a href="/" class="reset-btn">Сбросить</a>
+                </div>
+            </form>
+        </div>
+
+        <!-- Результаты -->
+        <div class="results-section">
+            <div class="results-header">
+                <h2>Результаты ({{ total_count }})</h2>
+            </div>
+
+            <!-- Таблица -->
+            <div class="table-container">
+                {% if qa_pairs %}
+                <table class="qa-table">
+                    <thead>
+                        <tr>
+                            <th width="5%">ID</th>
+                            <th width="30%">Вопрос</th>
+                            <th width="35%">Ответ</th>
+                            <th width="12%">Направление</th>
+                            <th width="10%">Тип вопроса</th>
+                            <th width="8%">Ключевые слова</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for pair in qa_pairs %}
+                        <tr class="qa-row {% if pair.is_audited %}audited{% endif %}" 
+                            data-id="{{ pair.id }}" 
+                            onclick="toggleAudit('{{ pair.id }}', this)">
+                            <td class="id-cell">
+                                <span class="audit-star">{% if pair.is_audited %}⭐{% endif %}</span>
+                                {{ pair.id }}
+                            </td>
+                            <td class="text-cell">{{ pair.question }}</td>
+                            <td class="text-cell">{{ pair.answer }}</td>
+                            <td class="direction-cell">
+                                <span class="badge {% if 'Клиент' in pair.direction %}badge-client{% else %}badge-operator{% endif %}">
+                                    {{ pair.direction }}
+                                </span>
+                            </td>
+                            <td class="type-cell">{{ pair.question_type }}</td>
+                            <td class="keywords-cell">
+                                {% for keyword in pair.keywords %}
+                                <span class="keyword-tag">{{ keyword }}</span>
+                                {% endfor %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <div class="no-results">
+                    <p>😔 Ничего не найдено</p>
+                    <p>Попробуйте изменить параметры поиска</p>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Пагинация -->
+            {% if not no_pagination and total_pages > 1 %}
+            <div class="pagination">
+                {% if page > 1 %}
+                <a href="?page={{ page - 1 }}{% if search %}&search={{ search }}{% endif %}{% if direction_filter %}&direction={{ direction_filter }}{% endif %}{% if type_filter %}&type={{ type_filter }}{% endif %}{% if audit_filter %}&audit={{ audit_filter }}{% endif %}" class="page-btn">
+                    ← Назад
+                </a>
+                {% endif %}
+
+                <span class="page-info">
+                    Страница {{ page }} из {{ total_pages }}
+                </span>
+
+                {% if page < total_pages %}
+                <a href="?page={{ page + 1 }}{% if search %}&search={{ search }}{% endif %}{% if direction_filter %}&direction={{ direction_filter }}{% endif %}{% if type_filter %}&type={{ type_filter }}{% endif %}{% if audit_filter %}&audit={{ audit_filter }}{% endif %}" class="page-btn">
+                    Вперед →
+                </a>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>
