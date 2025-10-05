@@ -173,7 +173,7 @@
             {% if not no_pagination and total_pages > 1 %}
             <div class="pagination">
                 {% if page > 1 %}
-                <a href="?page={{ page - 1 }}{% if search %}&search={{ search }}{% endif %}{% if direction_filter %}&direction={{ direction_filter }}{% endif %}{% if type_filter %}&type={{ type_filter }}{% endif %}{% if audit_filter %}&audit={{ audit_filter }}{% endif %}{% if relevance_filter %}&relevance={{ relevance_filter }}{% endif %}" class="page-btn">
+                <a href="?page={{ page - 1 }}{% if search %}&search={{ search }}{% endif %}{% if direction_filter %}&direction={{ direction_filter }}{% endif %}{% if type_filter %}&type={{ type_filter }}{% endif %}{% if audit_filter %}&audit={{ audit_filter }}{% endif %}" class="page-btn">
                     ← Назад
                 </a>
                 {% endif %}
@@ -183,7 +183,7 @@
                 </span>
 
                 {% if page < total_pages %}
-                <a href="?page={{ page + 1 }}{% if search %}&search={{ search }}{% endif %}{% if direction_filter %}&direction={{ direction_filter }}{% endif %}{% if type_filter %}&type={{ type_filter }}{% endif %}{% if audit_filter %}&audit={{ audit_filter }}{% endif %}{% if relevance_filter %}&relevance={{ relevance_filter }}{% endif %}" class="page-btn">
+                <a href="?page={{ page + 1 }}{% if search %}&search={{ search }}{% endif %}{% if direction_filter %}&direction={{ direction_filter }}{% endif %}{% if type_filter %}&type={{ type_filter }}{% endif %}{% if audit_filter %}&audit={{ audit_filter }}{% endif %}" class="page-btn">
                     Вперед →
                 </a>
                 {% endif %}

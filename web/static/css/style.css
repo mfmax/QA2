@@ -26,11 +26,26 @@ body {
 .header {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
-    padding: 25px 40px;
-    text-align: center;
+    padding: 20px 40px;
 }
 
-.header h1 {
+.header-content {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.logo {
+    width: 160px;
+    height: auto;
+    flex-shrink: 0;
+}
+
+.header-text {
+    flex: 1;
+}
+
+.header-text h1 {
     font-size: 1.8em;
     margin-bottom: 5px;
     font-weight: 700;
@@ -39,6 +54,7 @@ body {
 .subtitle {
     font-size: 0.95em;
     opacity: 0.95;
+    margin: 0;
 }
 
 /* Статистика */
@@ -445,16 +461,27 @@ body {
     }
 
     .header {
-        padding: 25px 20px;
+        padding: 20px;
     }
 
-    .header h1 {
-        font-size: 1.8em;
+    .header-content {
+        flex-direction: column;
+        gap: 10px;
+        text-align: center;
+    }
+
+    .logo {
+        width: 140px;
+    }
+
+    .header-text h1 {
+        font-size: 1.5em;
     }
 
     .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
         padding: 20px;
-        gap: 15px;
+        gap: 10px;
     }
 
     .filters-section {

@@ -1,6 +1,10 @@
 // Глобальная функция для переключения аудита (левая кнопка)
 async function toggleAudit(pairId, rowElement) {
     try {
+        // Проверяем текущее состояние ДО изменения
+        const wasIrrelevant = rowElement.classList.contains('irrelevant');
+        const wasAudited = rowElement.classList.contains('audited');
+        
         const response = await fetch('/api/toggle_audit/' + pairId, {
             method: 'POST'
         });
@@ -11,15 +15,25 @@ async function toggleAudit(pairId, rowElement) {
             rowElement.classList.add('audited');
             rowElement.classList.remove('irrelevant');
             rowElement.querySelector('.audit-star').textContent = '⭐';
+            
+            // Если не была проверенной, увеличиваем счётчик
+            if (!wasAudited) {
+                updateCounter('audited', 1);
+            }
+            
+            // Если была нерелевантной, уменьшаем счётчик нерелевантных
+            if (wasIrrelevant) {
+                updateCounter('irrelevant', -1);
+            }
         } else {
             rowElement.classList.remove('audited');
             rowElement.querySelector('.audit-star').textContent = '';
+            
+            // Если была проверенной, уменьшаем счётчик
+            if (wasAudited) {
+                updateCounter('audited', -1);
+            }
         }
-        
-        // Перезагружаем для обновления счётчика
-        setTimeout(function() {
-            location.reload();
-        }, 300);
         
     } catch (error) {
         console.error('Ошибка:', error);
@@ -30,6 +44,10 @@ async function toggleAudit(pairId, rowElement) {
 // Функция для переключения нерелевантности (правая кнопка)
 async function toggleIrrelevant(pairId, rowElement) {
     try {
+        // Проверяем текущее состояние ДО изменения
+        const wasAudited = rowElement.classList.contains('audited');
+        const wasIrrelevant = rowElement.classList.contains('irrelevant');
+        
         const response = await fetch('/api/toggle_irrelevant/' + pairId, {
             method: 'POST'
         });
@@ -40,15 +58,25 @@ async function toggleIrrelevant(pairId, rowElement) {
             rowElement.classList.add('irrelevant');
             rowElement.classList.remove('audited');
             rowElement.querySelector('.audit-star').textContent = '❌';
+            
+            // Если не была нерелевантной, увеличиваем счётчик
+            if (!wasIrrelevant) {
+                updateCounter('irrelevant', 1);
+            }
+            
+            // Если была проверенной, уменьшаем счётчик проверенных
+            if (wasAudited) {
+                updateCounter('audited', -1);
+            }
         } else {
             rowElement.classList.remove('irrelevant');
             rowElement.querySelector('.audit-star').textContent = '';
+            
+            // Если была нерелевантной, уменьшаем счётчик
+            if (wasIrrelevant) {
+                updateCounter('irrelevant', -1);
+            }
         }
-        
-        // Перезагружаем для обновления счётчика
-        setTimeout(function() {
-            location.reload();
-        }, 300);
         
     } catch (error) {
         console.error('Ошибка:', error);
@@ -56,12 +84,70 @@ async function toggleIrrelevant(pairId, rowElement) {
     }
 }
 
+// Функция обновления счётчиков
+function updateCounter(type, delta) {
+    let counterElement;
+    
+    if (type === 'audited') {
+        // Находим карточку "Проверено" (4-я карточка)
+        counterElement = document.querySelector('.stat-card-audit .stat-value');
+    } else if (type === 'irrelevant') {
+        // Находим карточку "Нерелевантно" (5-я карточка)
+        counterElement = document.querySelector('.stat-card-irrelevant .stat-value');
+    }
+    
+    if (counterElement) {
+        const currentValue = parseInt(counterElement.textContent) || 0;
+        const newValue = Math.max(0, currentValue + delta);
+        
+        // Плавная анимация изменения числа
+        animateCounterChange(counterElement, currentValue, newValue);
+    }
+}
+
+// Анимация изменения счётчика
+function animateCounterChange(element, from, to) {
+    const duration = 300; // milliseconds
+    const steps = 20;
+    const stepValue = (to - from) / steps;
+    const stepTime = duration / steps;
+    
+    let current = from;
+    let step = 0;
+    
+    const timer = setInterval(function() {
+        step++;
+        current += stepValue;
+        
+        if (step >= steps) {
+            element.textContent = to;
+            clearInterval(timer);
+        } else {
+            element.textContent = Math.round(current);
+        }
+    }, stepTime);
+}
+
 // Инициализация
 document.addEventListener('DOMContentLoaded', function() {
     highlightSearchResults();
     animateStats();
     setupRowClickHandlers();
+    markInitialStates();
 });
+
+// Помечаем начальное состояние строк
+function markInitialStates() {
+    const rows = document.querySelectorAll('.qa-row');
+    rows.forEach(function(row) {
+        if (row.classList.contains('audited')) {
+            row.dataset.wasAudited = 'true';
+        }
+        if (row.classList.contains('irrelevant')) {
+            row.dataset.wasIrrelevant = 'true';
+        }
+    });
+}
 
 // Настройка обработчиков кликов для строк
 function setupRowClickHandlers() {
