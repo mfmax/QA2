@@ -49,130 +49,12 @@ def get_statistics():
 @app.route('/')
 def index():
     """Главная страница"""
-    search = request.args.get('search', '').strip()
-    direction_filter = request.args.get('direction', '')
-    type_filter = request.args.get('type', '')
-    audit_filter = request.args.get('audit', '')
-    no_pagination = request.args.get('no_pagination', '') == 'on'
-    page = int(request.args.get('page', 1))
-    per_page = 100
-    
-    stats = get_statistics()
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    
-    query = """
-        SELECT id, question, answer, direction, question_type, keywords, is_audited 
-        FROM qa_pairs 
-        WHERE 1=1
-    """
-    params = []
-    
-    if search:
-        query += " AND (question LIKE ? OR answer LIKE ?)"
-        params.extend([f'%{search}%', f'%{search}%'])
-    if direction_filter:
-        query += " AND direction = ?"
-        params.append(direction_filter)
-    if type_filter:
-        query += " AND question_type = ?"
-        params.append(type_filter)
-    if audit_filter == 'yes':
-        query += " AND is_audited = 1"
-    elif audit_filter == 'no':
-        query += " AND is_audited = 0"
-    
-    count_query = "SELECT COUNT(*) as count FROM qa_pairs WHERE 1=1"
-    count_params = []
-    if search:
-        count_query += " AND (question LIKE ? OR answer LIKE ?)"
-        count_params.extend([f'%{search}%', f'%{search}%'])
-    if direction_filter:
-        count_query += " AND direction = ?"
-        count_params.append(direction_filter)
-    if type_filter:
-        count_query += " AND question_type = ?"
-        count_params.append(type_filter)
-    if audit_filter == 'yes':
-        count_query += " AND is_audited = 1"
-    elif audit_filter == 'no':
-        count_query += " AND is_audited = 0"
-    
-    cursor.execute(count_query, count_params)
-    total_count = cursor.fetchone()['count']
-    
-    query += " ORDER BY id DESC"
-    if not no_pagination:
-        offset = (page - 1) * per_page
-        query += f" LIMIT {per_page} OFFSET {offset}"
-        total_pages = (total_count + per_page - 1) // per_page
-    else:
-        total_pages = 1
-    
-    cursor.execute(query, params)
-    rows = cursor.fetchall()
-    
-    qa_pairs = []
-    for row in rows:
-        try:
-            keywords = json.loads(row['keywords']) if row['keywords'] else []
-        except:
-            keywords = []
-        qa_pairs.append({
-            'id': row['id'],
-            'question': row['question'],
-            'answer': row['answer'],
-            'direction': row['direction'],
-            'question_type': row['question_type'] or '',
-            'keywords': keywords,
-            'is_audited': row['is_audited']
-        })
-    
-    cursor.execute("SELECT DISTINCT question_type FROM qa_pairs WHERE question_type IS NOT NULL AND question_type != '' ORDER BY question_type")
-    question_types = [row['question_type'] for row in cursor.fetchall()]
-    
-    cursor.execute("SELECT COUNT(*) as count FROM qa_pairs WHERE is_audited = 1")
-    audited_count = cursor.fetchone()['count']
-    
-    conn.close()
-    
-    return render_template('index.html', qa_pairs=qa_pairs, stats=stats, total_count=total_count,
-                          audited_count=audited_count, page=page, total_pages=total_pages,
-                          search=search, direction_filter=direction_filter, type_filter=type_filter,
-                          audit_filter=audit_filter, no_pagination=no_pagination, question_types=question_types)
-
-
-@app.route('/api/toggle_audit/<int:pair_id>', methods=['POST'])
-def toggle_audit(pair_id):
-    """API для переключения статуса аудита"""
-    try:
-        conn = get_db_connection()
-        cursor = conn.cursor()
-        cursor.execute("SELECT is_audited FROM qa_pairs WHERE id = ?", (pair_id,))
-        row = cursor.fetchone()
-        if not row:
-            return jsonify({'error': 'Not found'}), 404
-        new_status = 0 if row['is_audited'] else 1
-        cursor.execute("UPDATE qa_pairs SET is_audited = ? WHERE id = ?", (new_status, pair_id))
-        conn.commit()
-        conn.close()
-        return jsonify({'success': True, 'is_audited': new_status})
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-
-if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=5000)
-
-
-@app.route('/')
-def index():
-    """Главная страница"""
     # Параметры фильтрации
     search = request.args.get('search', '').strip()
     direction_filter = request.args.get('direction', '')
     type_filter = request.args.get('type', '')
-    audit_filter = request.args.get('audit', '')  # Новый фильтр аудита
+    audit_filter = request.args.get('audit', '')
+    relevance_filter = request.args.get('relevance', '')  # Новый фильтр релевантности
     no_pagination = request.args.get('no_pagination', '') == 'on'
     page = int(request.args.get('page', 1))
     per_page = 100
@@ -184,12 +66,12 @@ def index():
     conn = get_db_connection()
     cursor = conn.cursor()
     
-    # Базовый запрос
+    # Базовый запрос с метаданными звонков
     query = """
         SELECT 
             id, question, answer, direction, question_type, keywords,
             call_direction, operator_phone, client_phone, call_date, call_time,
-            is_audited
+            is_audited, is_irrelevant
         FROM qa_pairs
         WHERE 1=1
     """
@@ -210,14 +92,16 @@ def index():
         query += " AND question_type = ?"
         params.append(type_filter)
     
-    # Фильтр по аудиту
+    # Фильтр по аудиту (теперь включает и нерелевантные)
     if audit_filter == 'yes':
         query += " AND is_audited = 1"
+    elif audit_filter == 'irrelevant':
+        query += " AND is_irrelevant = 1"
     elif audit_filter == 'no':
-        query += " AND is_audited = 0"
+        query += " AND is_audited = 0 AND is_irrelevant = 0"
     
     # Получаем общее количество для пагинации
-    count_query = f"""
+    count_query = """
         SELECT COUNT(*) as count
         FROM qa_pairs
         WHERE 1=1
@@ -240,6 +124,11 @@ def index():
         count_query += " AND is_audited = 1"
     elif audit_filter == 'no':
         count_query += " AND is_audited = 0"
+    
+    if relevance_filter == 'relevant':
+        count_query += " AND is_irrelevant = 0"
+    elif relevance_filter == 'irrelevant':
+        count_query += " AND is_irrelevant = 1"
     
     cursor.execute(count_query, count_params)
     result = cursor.fetchone()
@@ -279,16 +168,20 @@ def index():
             'client_phone': row['client_phone'] or '',
             'call_date': row['call_date'] or '',
             'call_time': row['call_time'] or '',
-            'is_audited': row['is_audited']
+            'is_audited': row['is_audited'],
+            'is_irrelevant': row['is_irrelevant']
         })
     
     # Получаем уникальные типы вопросов для фильтра
     cursor.execute("SELECT DISTINCT question_type FROM qa_pairs WHERE question_type IS NOT NULL AND question_type != '' ORDER BY question_type")
     question_types = [row['question_type'] for row in cursor.fetchall()]
     
-    # Статистика аудита
+    # Статистика аудита и релевантности
     cursor.execute("SELECT COUNT(*) as count FROM qa_pairs WHERE is_audited = 1")
     audited_count = cursor.fetchone()['count']
+    
+    cursor.execute("SELECT COUNT(*) as count FROM qa_pairs WHERE is_irrelevant = 1")
+    irrelevant_count = cursor.fetchone()['count']
     
     conn.close()
     
@@ -298,6 +191,7 @@ def index():
         stats=stats,
         total_count=total_count,
         audited_count=audited_count,
+        irrelevant_count=irrelevant_count,
         page=page,
         total_pages=total_pages,
         per_page=per_page,
@@ -305,6 +199,7 @@ def index():
         direction_filter=direction_filter,
         type_filter=type_filter,
         audit_filter=audit_filter,
+        relevance_filter=relevance_filter,
         no_pagination=no_pagination,
         question_types=question_types
     )
@@ -324,13 +219,46 @@ def toggle_audit(pair_id):
         if not row:
             return jsonify({'error': 'Пара не найдена'}), 404
         
-        # Переключаем статус
+        # Переключаем статус и сбрасываем irrelevant
         new_status = 0 if row['is_audited'] else 1
-        cursor.execute("UPDATE qa_pairs SET is_audited = ? WHERE id = ?", (new_status, pair_id))
+        cursor.execute("""
+            UPDATE qa_pairs 
+            SET is_audited = ?, is_irrelevant = 0 
+            WHERE id = ?
+        """, (new_status, pair_id))
         conn.commit()
         conn.close()
         
         return jsonify({'success': True, 'is_audited': new_status})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/toggle_irrelevant/<int:pair_id>', methods=['POST'])
+def toggle_irrelevant(pair_id):
+    """API для переключения статуса релевантности"""
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        # Получаем текущий статус
+        cursor.execute("SELECT is_irrelevant FROM qa_pairs WHERE id = ?", (pair_id,))
+        row = cursor.fetchone()
+        
+        if not row:
+            return jsonify({'error': 'Пара не найдена'}), 404
+        
+        # Переключаем статус и сбрасываем audited
+        new_status = 0 if row['is_irrelevant'] else 1
+        cursor.execute("""
+            UPDATE qa_pairs 
+            SET is_irrelevant = ?, is_audited = 0 
+            WHERE id = ?
+        """, (new_status, pair_id))
+        conn.commit()
+        conn.close()
+        
+        return jsonify({'success': True, 'is_irrelevant': new_status})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 

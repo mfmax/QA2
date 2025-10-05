@@ -10,7 +10,7 @@
     <div class="container">
         <!-- Заголовок -->
         <header class="header">
-            <h1>📊  AI QA Extractor</h1>
+            <h1>📊 QA Extractor</h1>
             <p class="subtitle">Извлеченные пары вопрос-ответ из диалогов</p>
         </header>
 
@@ -31,6 +31,10 @@
             <div class="stat-card stat-card-audit">
                 <div class="stat-value">{{ audited_count }}</div>
                 <div class="stat-label">⭐ Проверено</div>
+            </div>
+            <div class="stat-card stat-card-irrelevant">
+                <div class="stat-value">{{ irrelevant_count }}</div>
+                <div class="stat-label">❌ Нерелевантно</div>
             </div>
         </div>
 
@@ -77,11 +81,14 @@
                     </div>
 
                     <div class="filter-group">
-                        <label>Аудит:</label>
+                        <label>Статус проверки:</label>
                         <select name="audit" class="filter-select">
                             <option value="">Все</option>
                             <option value="yes" {% if audit_filter == 'yes' %}selected{% endif %}>
-                                ✓ Проверено
+                                ⭐ Проверено
+                            </option>
+                            <option value="irrelevant" {% if audit_filter == 'irrelevant' %}selected{% endif %}>
+                                ❌ Нерелевантно
                             </option>
                             <option value="no" {% if audit_filter == 'no' %}selected{% endif %}>
                                 Не проверено
@@ -128,11 +135,13 @@
                     </thead>
                     <tbody>
                         {% for pair in qa_pairs %}
-                        <tr class="qa-row {% if pair.is_audited %}audited{% endif %}" 
-                            data-id="{{ pair.id }}" 
-                            onclick="toggleAudit('{{ pair.id }}', this)">
+                        <tr class="qa-row {% if pair.is_audited %}audited{% endif %}{% if pair.is_irrelevant %}irrelevant{% endif %}" 
+                            data-id="{{ pair.id }}">
                             <td class="id-cell">
-                                <span class="audit-star">{% if pair.is_audited %}⭐{% endif %}</span>
+                                <span class="audit-star">
+                                    {% if pair.is_audited %}⭐{% endif %}
+                                    {% if pair.is_irrelevant %}❌{% endif %}
+                                </span>
                                 {{ pair.id }}
                             </td>
                             <td class="text-cell">{{ pair.question }}</td>
@@ -164,7 +173,7 @@
             {% if not no_pagination and total_pages > 1 %}
             <div class="pagination">
                 {% if page > 1 %}
-                <a href="?page={{ page - 1 }}{% if search %}&search={{ search }}{% endif %}{% if direction_filter %}&direction={{ direction_filter }}{% endif %}{% if type_filter %}&type={{ type_filter }}{% endif %}{% if audit_filter %}&audit={{ audit_filter }}{% endif %}" class="page-btn">
+                <a href="?page={{ page - 1 }}{% if search %}&search={{ search }}{% endif %}{% if direction_filter %}&direction={{ direction_filter }}{% endif %}{% if type_filter %}&type={{ type_filter }}{% endif %}{% if audit_filter %}&audit={{ audit_filter }}{% endif %}{% if relevance_filter %}&relevance={{ relevance_filter }}{% endif %}" class="page-btn">
                     ← Назад
                 </a>
                 {% endif %}
@@ -174,7 +183,7 @@
                 </span>
 
                 {% if page < total_pages %}
-                <a href="?page={{ page + 1 }}{% if search %}&search={{ search }}{% endif %}{% if direction_filter %}&direction={{ direction_filter }}{% endif %}{% if type_filter %}&type={{ type_filter }}{% endif %}{% if audit_filter %}&audit={{ audit_filter }}{% endif %}" class="page-btn">
+                <a href="?page={{ page + 1 }}{% if search %}&search={{ search }}{% endif %}{% if direction_filter %}&direction={{ direction_filter }}{% endif %}{% if type_filter %}&type={{ type_filter }}{% endif %}{% if audit_filter %}&audit={{ audit_filter }}{% endif %}{% if relevance_filter %}&relevance={{ relevance_filter }}{% endif %}" class="page-btn">
                     Вперед →
                 </a>
                 {% endif %}

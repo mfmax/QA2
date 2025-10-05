@@ -1,4 +1,4 @@
-// Глобальная функция для переключения аудита
+// Глобальная функция для переключения аудита (левая кнопка)
 async function toggleAudit(pairId, rowElement) {
     try {
         const response = await fetch('/api/toggle_audit/' + pairId, {
@@ -9,9 +9,39 @@ async function toggleAudit(pairId, rowElement) {
         
         if (data.is_audited) {
             rowElement.classList.add('audited');
+            rowElement.classList.remove('irrelevant');
             rowElement.querySelector('.audit-star').textContent = '⭐';
         } else {
             rowElement.classList.remove('audited');
+            rowElement.querySelector('.audit-star').textContent = '';
+        }
+        
+        // Перезагружаем для обновления счётчика
+        setTimeout(function() {
+            location.reload();
+        }, 300);
+        
+    } catch (error) {
+        console.error('Ошибка:', error);
+        alert('Не удалось обновить статус');
+    }
+}
+
+// Функция для переключения нерелевантности (правая кнопка)
+async function toggleIrrelevant(pairId, rowElement) {
+    try {
+        const response = await fetch('/api/toggle_irrelevant/' + pairId, {
+            method: 'POST'
+        });
+        
+        const data = await response.json();
+        
+        if (data.is_irrelevant) {
+            rowElement.classList.add('irrelevant');
+            rowElement.classList.remove('audited');
+            rowElement.querySelector('.audit-star').textContent = '❌';
+        } else {
+            rowElement.classList.remove('irrelevant');
             rowElement.querySelector('.audit-star').textContent = '';
         }
         
@@ -30,7 +60,43 @@ async function toggleAudit(pairId, rowElement) {
 document.addEventListener('DOMContentLoaded', function() {
     highlightSearchResults();
     animateStats();
+    setupRowClickHandlers();
 });
+
+// Настройка обработчиков кликов для строк
+function setupRowClickHandlers() {
+    const rows = document.querySelectorAll('.qa-row');
+    
+    rows.forEach(function(row) {
+        // Отключаем стандартное контекстное меню на правый клик
+        row.addEventListener('contextmenu', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            const pairId = this.getAttribute('data-id');
+            toggleIrrelevant(pairId, this);
+            return false;
+        });
+        
+        // Обработчик левого клика
+        row.addEventListener('click', function(e) {
+            // Игнорируем если это был правый клик
+            if (e.button !== 0) return;
+            
+            e.preventDefault();
+            e.stopPropagation();
+            const pairId = this.getAttribute('data-id');
+            toggleAudit(pairId, this);
+        });
+        
+        // Дополнительная защита от обработки правого клика как обычного
+        row.addEventListener('mousedown', function(e) {
+            if (e.button === 2) { // Правая кнопка
+                e.preventDefault();
+                return false;
+            }
+        });
+    });
+}
 
 function highlightSearchResults() {
     const searchQuery = new URLSearchParams(window.location.search).get('search');

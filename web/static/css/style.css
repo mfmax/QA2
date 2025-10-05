@@ -44,39 +44,39 @@ body {
 /* Статистика */
 .stats-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 20px;
-    padding: 30px 40px;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 15px;
+    padding: 20px 40px;
     background: #f8f9fa;
     border-bottom: 2px solid #e9ecef;
 }
 
 .stat-card {
     background: white;
-    padding: 25px;
-    border-radius: 15px;
+    padding: 15px 20px;
+    border-radius: 12px;
     text-align: center;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
     transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
 .stat-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.2);
+    transform: translateY(-3px);
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.2);
 }
 
 .stat-value {
-    font-size: 3em;
+    font-size: 2em;
     font-weight: 700;
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     background-clip: text;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
-    margin-bottom: 10px;
+    margin-bottom: 5px;
 }
 
 .stat-label {
-    font-size: 0.95em;
+    font-size: 0.85em;
     color: #6c757d;
     font-weight: 500;
 }
@@ -88,6 +88,18 @@ body {
 
 .stat-card-audit .stat-value {
     background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+/* Стиль для карточки статистики нерелевантных */
+.stat-card-irrelevant {
+    border: 2px solid #dc3545;
+}
+
+.stat-card-irrelevant .stat-value {
+    background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
     background-clip: text;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
@@ -343,6 +355,16 @@ body {
 
 .qa-row.audited:hover {
     background-color: #c3e6cb !important;
+}
+
+/* Стили для нерелевантных строк */
+.qa-row.irrelevant {
+    background-color: #f8d7da !important;
+    border-left: 4px solid #dc3545;
+}
+
+.qa-row.irrelevant:hover {
+    background-color: #f1aeb5 !important;
 }
 
 /* Анимация появления звёздочки */
