@@ -10,7 +10,9 @@ venv/
 
 # Временные папки для обработки
 all_txt_test/
+all_txt_test_old/
 back/
+chat_lawyers/
 
 # Пакеты/сборки
 build/
