@@ -10,7 +10,7 @@
     <div class="container">
         <!-- Заголовок -->
         <header class="header">
-            <h1>📊AI QA Extractor</h1>
+            <h1>📊 AI QA Extractor</h1>
             <p class="subtitle">Извлеченные пары вопрос-ответ из аудио диалогов</p>
         </header>
 
@@ -96,6 +96,19 @@
                         </select>
                     </div>
 
+                    <div class="filter-group">
+                        <label>Источник:</label>
+                        <select name="source" class="filter-select">
+                            <option value="">Все</option>
+                            <option value="call" {% if source_filter == 'call' %}selected{% endif %}>
+                                📞 Call
+                            </option>
+                            <option value="lawyers" {% if source_filter == 'lawyers' %}selected{% endif %}>
+                                ⚖️ Lawyers
+                            </option>
+                        </select>
+                    </div>
+
                     <div class="filter-group checkbox-group">
                         <label class="checkbox-label">
                             <input 
@@ -108,7 +121,7 @@
                     </div>
 
                     <button type="submit" class="apply-btn">Применить</button>
-                    <a href="/" class="reset-btn">Сбросить</a>
+                    
                 </div>
             </form>
         </div>
@@ -125,12 +138,12 @@
                 <table class="qa-table">
                     <thead>
                         <tr>
-                            <th width="5%">ID</th>
-                            <th width="30%">Вопрос</th>
-                            <th width="35%">Ответ</th>
+                            <th width="8%">Источник</th>
+                            <th width="27%">Вопрос</th>
+                            <th width="30%">Ответ</th>
                             <th width="12%">Направление</th>
                             <th width="10%">Тип вопроса</th>
-                            <th width="8%">Ключевые слова</th>
+                            <th width="13%">Ключевые слова</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -142,7 +155,13 @@
                                     {% if pair.is_audited %}⭐{% endif %}
                                     {% if pair.is_irrelevant %}❌{% endif %}
                                 </span>
-                                {{ pair.id }}
+                                {% if pair.source == 'call' %}
+                                <span class="source-badge source-call">📞 Call</span>
+                                {% elif pair.source == 'lawyers' %}
+                                <span class="source-badge source-lawyers">⚖️ Lawyers</span>
+                                {% else %}
+                                <span class="source-badge">{{ pair.source }}</span>
+                                {% endif %}
                             </td>
                             <td class="text-cell">{{ pair.question }}</td>
                             <td class="text-cell">{{ pair.answer }}</td>
@@ -173,7 +192,7 @@
             {% if not no_pagination and total_pages > 1 %}
             <div class="pagination">
                 {% if page > 1 %}
-                <a href="?page={{ page - 1 }}{% if search %}&search={{ search }}{% endif %}{% if direction_filter %}&direction={{ direction_filter }}{% endif %}{% if type_filter %}&type={{ type_filter }}{% endif %}{% if audit_filter %}&audit={{ audit_filter }}{% endif %}" class="page-btn">
+                <a href="?page={{ page - 1 }}{% if search %}&search={{ search }}{% endif %}{% if direction_filter %}&direction={{ direction_filter }}{% endif %}{% if type_filter %}&type={{ type_filter }}{% endif %}{% if audit_filter %}&audit={{ audit_filter }}{% endif %}{% if source_filter %}&source={{ source_filter }}{% endif %}" class="page-btn">
                     ← Назад
                 </a>
                 {% endif %}
@@ -183,7 +202,7 @@
                 </span>
 
                 {% if page < total_pages %}
-                <a href="?page={{ page + 1 }}{% if search %}&search={{ search }}{% endif %}{% if direction_filter %}&direction={{ direction_filter }}{% endif %}{% if type_filter %}&type={{ type_filter }}{% endif %}{% if audit_filter %}&audit={{ audit_filter }}{% endif %}" class="page-btn">
+                <a href="?page={{ page + 1 }}{% if search %}&search={{ search }}{% endif %}{% if direction_filter %}&direction={{ direction_filter }}{% endif %}{% if type_filter %}&type={{ type_filter }}{% endif %}{% if audit_filter %}&audit={{ audit_filter }}{% endif %}{% if source_filter %}&source={{ source_filter }}{% endif %}" class="page-btn">
                     Вперед →
                 </a>
                 {% endif %}

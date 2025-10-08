@@ -54,7 +54,7 @@ def index():
     direction_filter = request.args.get('direction', '')
     type_filter = request.args.get('type', '')
     audit_filter = request.args.get('audit', '')
-    relevance_filter = request.args.get('relevance', '')  # Новый фильтр релевантности
+    source_filter = request.args.get('source', '')
     no_pagination = request.args.get('no_pagination', '') == 'on'
     page = int(request.args.get('page', 1))
     per_page = 100
@@ -71,7 +71,7 @@ def index():
         SELECT 
             id, question, answer, direction, question_type, keywords,
             call_direction, operator_phone, client_phone, call_date, call_time,
-            is_audited, is_irrelevant
+            is_audited, is_irrelevant, source
         FROM qa_pairs
         WHERE 1=1
     """
@@ -92,13 +92,18 @@ def index():
         query += " AND question_type = ?"
         params.append(type_filter)
     
-    # Фильтр по аудиту (теперь включает и нерелевантные)
+    # Фильтр по аудиту
     if audit_filter == 'yes':
         query += " AND is_audited = 1"
     elif audit_filter == 'irrelevant':
         query += " AND is_irrelevant = 1"
     elif audit_filter == 'no':
         query += " AND is_audited = 0 AND is_irrelevant = 0"
+    
+    # Фильтр по источнику
+    if source_filter:
+        query += " AND source = ?"
+        params.append(source_filter)
     
     # Получаем общее количество для пагинации
     count_query = """
@@ -122,13 +127,14 @@ def index():
     
     if audit_filter == 'yes':
         count_query += " AND is_audited = 1"
-    elif audit_filter == 'no':
-        count_query += " AND is_audited = 0"
-    
-    if relevance_filter == 'relevant':
-        count_query += " AND is_irrelevant = 0"
-    elif relevance_filter == 'irrelevant':
+    elif audit_filter == 'irrelevant':
         count_query += " AND is_irrelevant = 1"
+    elif audit_filter == 'no':
+        count_query += " AND is_audited = 0 AND is_irrelevant = 0"
+    
+    if source_filter:
+        count_query += " AND source = ?"
+        count_params.append(source_filter)
     
     cursor.execute(count_query, count_params)
     result = cursor.fetchone()
@@ -169,7 +175,8 @@ def index():
             'call_date': row['call_date'] or '',
             'call_time': row['call_time'] or '',
             'is_audited': row['is_audited'],
-            'is_irrelevant': row['is_irrelevant']
+            'is_irrelevant': row['is_irrelevant'],
+            'source': row['source'] or 'call'
         })
     
     # Получаем уникальные типы вопросов для фильтра
@@ -183,6 +190,14 @@ def index():
     cursor.execute("SELECT COUNT(*) as count FROM qa_pairs WHERE is_irrelevant = 1")
     irrelevant_count = cursor.fetchone()['count']
     
+    # Статистика по источникам
+    cursor.execute("""
+        SELECT source, COUNT(*) as count 
+        FROM qa_pairs 
+        GROUP BY source
+    """)
+    by_source = {row['source']: row['count'] for row in cursor.fetchall()}
+    
     conn.close()
     
     return render_template(
@@ -192,6 +207,7 @@ def index():
         total_count=total_count,
         audited_count=audited_count,
         irrelevant_count=irrelevant_count,
+        by_source=by_source,
         page=page,
         total_pages=total_pages,
         per_page=per_page,
@@ -199,7 +215,7 @@ def index():
         direction_filter=direction_filter,
         type_filter=type_filter,
         audit_filter=audit_filter,
-        relevance_filter=relevance_filter,
+        source_filter=source_filter,
         no_pagination=no_pagination,
         question_types=question_types
     )

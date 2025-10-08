@@ -32,22 +32,34 @@ body {
 .header-content {
     display: flex;
     align-items: center;
-    gap: 20px;
+    justify-content: space-between;
+    gap: 25px;
+}
+
+.logo-container {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    margin-left: auto;
+    background: white;
+    padding: 5px 10px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .logo {
-    width: 160px;
+    width: 170px;
     height: auto;
-    flex-shrink: 0;
+    display: block;
 }
 
 .header-text {
-    flex: 1;
+    flex: 0;
 }
 
 .header-text h1 {
     font-size: 1.8em;
-    margin-bottom: 5px;
+    margin: 0 0 5px 0;
     font-weight: 700;
 }
 
@@ -277,6 +289,7 @@ body {
     width: 100%;
     border-collapse: collapse;
     background: white;
+    table-layout: fixed;
 }
 
 .qa-table thead {
@@ -291,6 +304,16 @@ body {
     font-size: 0.95em;
     text-transform: uppercase;
     letter-spacing: 0.5px;
+}
+
+.qa-table thead tr th {
+    display: table-cell !important;
+    visibility: visible !important;
+}
+
+.qa-table tbody tr td {
+    display: table-cell !important;
+    visibility: visible !important;
 }
 
 .qa-table tbody tr {
@@ -312,6 +335,25 @@ body {
     font-weight: 600;
     color: #667eea;
     text-align: center;
+}
+
+.source-badge {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 0.8em;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.source-call {
+    background: #e3f2fd;
+    color: #1565c0;
+}
+
+.source-lawyers {
+    background: #fff3e0;
+    color: #e65100;
 }
 
 .text-cell {
@@ -465,13 +507,19 @@ body {
     }
 
     .header-content {
-        flex-direction: column;
-        gap: 10px;
+        flex-direction: column-reverse;
+        gap: 15px;
         text-align: center;
     }
 
+    .logo-container {
+        justify-content: center;
+        margin-left: 0;
+    }
+
     .logo {
-        width: 140px;
+        width: 150px;
+        height: 42px;
     }
 
     .header-text h1 {
