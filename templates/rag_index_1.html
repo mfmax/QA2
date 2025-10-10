@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Assistant - RAG Q&A System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px 40px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.95;
+        }
+
+        .chat-container {
+            padding: 40px;
+            min-height: 500px;
+        }
+
+        .input-section {
+            margin-bottom: 30px;
+        }
+
+        .input-wrapper {
+            display: flex;
+            gap: 15px;
+            align-items: stretch;
+        }
+
+        #questionInput {
+            flex: 1;
+            padding: 18px 25px;
+            border: 2px solid #e9ecef;
+            border-radius: 15px;
+            font-size: 1.05em;
+            transition: all 0.3s ease;
+            resize: none;
+            font-family: inherit;
+            min-height: 60px;
+        }
+
+        #questionInput:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        #askButton {
+            padding: 18px 40px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 15px;
+            font-size: 1.05em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+        }
+
+        #askButton:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        #askButton:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .results-section {
+            margin-top: 30px;
+        }
+
+        .answer-card {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 25px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+        }
+
+        .answer-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+            font-size: 1.2em;
+            font-weight: 600;
+            color: #667eea;
+        }
+
+        .answer-content {
+            line-height: 1.8;
+            font-size: 1.05em;
+            color: #333;
+            white-space: pre-wrap;
+        }
+
+        .source-pairs {
+            margin-top: 30px;
+        }
+
+        .source-pairs-header {
+            font-size: 1.3em;
+            font-weight: 600;
+            color: #495057;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .source-card {
+            background: white;
+            border-left: 4px solid #667eea;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            transition: transform 0.2s ease;
+        }
+
+        .source-card:hover {
+            transform: translateX(5px);
+        }
+
+        .source-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .source-number {
+            background: #667eea;
+            color: white;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: 600;
+        }
+
+        .similarity-badge {
+            background: #28a745;
+            color: white;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: 600;
+        }
+
+        .source-question {
+            font-weight: 600;
+            color: #495057;
+            margin-bottom: 10px;
+            font-size: 1.05em;
+        }
+
+        .source-answer {
+            color: #6c757d;
+            line-height: 1.6;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #667eea;
+            font-size: 1.1em;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error-message {
+            background: #f8d7da;
+            border: 2px solid #f5c6cb;
+            border-radius: 10px;
+            padding: 20px;
+            color: #721c24;
+            margin-top: 20px;
+        }
+
+        .no-results {
+            text-align: center;
+            padding: 60px 20px;
+            color: #6c757d;
+        }
+
+        .no-results-icon {
+            font-size: 4em;
+            margin-bottom: 20px;
+        }
+
+        /* Typing animation for streaming */
+        .typing-cursor {
+            display: inline-block;
+            width: 2px;
+            height: 1em;
+            background: #667eea;
+            margin-left: 2px;
+            animation: blink 1s infinite;
+        }
+
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0; }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                border-radius: 15px;
+            }
+
+            .header h1 {
+                font-size: 2em;
+            }
+
+            .chat-container {
+                padding: 20px;
+            }
+
+            .input-wrapper {
+                flex-direction: column;
+            }
+
+            #askButton {
+                padding: 15px 30px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>🤖 AI Assistant</h1>
+            <p>Задайте вопрос и получите ответ на основе базы знаний</p>
+        </header>
+
+        <div class="chat-container">
+            <div class="input-section">
+                <div class="input-wrapper">
+                    <textarea 
+                        id="questionInput" 
+                        placeholder="Введите ваш вопрос здесь..."
+                        rows="3"
+                    ></textarea>
+                    <button id="askButton">
+                        <span id="buttonText">Спросить</span>
+                    </button>
+                </div>
+            </div>
+
+            <div id="resultsContainer" class="results-section"></div>
+        </div>
+    </div>
+
+    <script>
+        const questionInput = document.getElementById('questionInput');
+        const askButton = document.getElementById('askButton');
+        const buttonText = document.getElementById('buttonText');
+        const resultsContainer = document.getElementById('resultsContainer');
+        
+        const STREAMING_ENABLED = {{ streaming | tojson }};
+        const SHOW_SOURCES = {{ show_sources | tojson }};
+
+        // Обработчик Enter (Ctrl+Enter для отправки)
+        questionInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && e.ctrlKey) {
+                e.preventDefault();
+                askQuestion();
+            }
+        });
+
+        askButton.addEventListener('click', askQuestion);
+
+        async function askQuestion() {
+            const question = questionInput.value.trim();
+            
+            if (!question) {
+                alert('Пожалуйста, введите вопрос');
+                return;
+            }
+
+            // Отключаем кнопку и показываем загрузку
+            askButton.disabled = true;
+            buttonText.textContent = 'Обработка...';
+            
+            // Очищаем предыдущие результаты
+            resultsContainer.innerHTML = '<div class="loading"><div class="spinner"></div>Поиск релевантной информации...</div>';
+
+            try {
+                if (STREAMING_ENABLED) {
+                    await handleStreamingResponse(question);
+                } else {
+                    await handleRegularResponse(question);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showError('Произошла ошибка при обработке запроса: ' + error.message);
+            } finally {
+                askButton.disabled = false;
+                buttonText.textContent = 'Спросить';
+            }
+        }
+
+        async function handleRegularResponse(question) {
+            const response = await fetch('/api/ask', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ question: question })
+            });
+
+            const result = await response.json();
+
+            if (!result.success) {
+                showError(result.error || result.answer);
+                return;
+            }
+
+            displayResults(result.answer, result.source_pairs || []);
+        }
+
+        async function handleStreamingResponse(question) {
+            const response = await fetch('/api/ask_stream', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ question: question })
+            });
+
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
+            
+            let answerContent = '';
+            let sourcePairs = [];
+            let answerStarted = false;
+
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+
+                const chunk = decoder.decode(value);
+                const lines = chunk.split('\n');
+
+                for (const line of lines) {
+                    if (line.startsWith('data: ')) {
+                        const data = line.slice(6);
+                        
+                        if (data === '[DONE]') break;
+
+                        try {
+                            const parsed = JSON.parse(data);
+
+                            if (parsed.type === 'sources') {
+                                sourcePairs = parsed.data;
+                                if (SHOW_SOURCES) {
+                                    displaySources(sourcePairs);
+                                }
+                            } else if (parsed.type === 'answer_start') {
+                                answerStarted = true;
+                                displayAnswerStart();
+                            } else if (parsed.type === 'answer_chunk') {
+                                answerContent += parsed.data;
+                                updateAnswer(answerContent);
+                            } else if (parsed.type === 'answer_end') {
+                                finalizeAnswer();
+                            } else if (parsed.type === 'error') {
+                                showError(parsed.data);
+                            }
+                        } catch (e) {
+                            console.error('Parse error:', e);
+                        }
+                    }
+                }
+            }
+        }
+
+        function displayAnswerStart() {
+            const answerCard = document.createElement('div');
+            answerCard.className = 'answer-card';
+            answerCard.id = 'answerCard';
+            answerCard.innerHTML = `
+                <div class="answer-header">
+                    <span>💬</span>
+                    <span>Ответ AI Assistant</span>
+                </div>
+                <div class="answer-content" id="answerContent">
+                    <span class="typing-cursor"></span>
+                </div>
+            `;
+            
+            // Вставляем перед источниками если они есть, иначе в начало
+            const sourcesSection = document.getElementById('sourcesSection');
+            if (sourcesSection) {
+                resultsContainer.insertBefore(answerCard, sourcesSection);
+            } else {
+                resultsContainer.innerHTML = '';
+                resultsContainer.appendChild(answerCard);
+            }
+        }
+
+        function updateAnswer(content) {
+            const answerContent = document.getElementById('answerContent');
+            if (answerContent) {
+                answerContent.innerHTML = content + '<span class="typing-cursor"></span>';
+            }
+        }
+
+        function finalizeAnswer() {
+            const answerContent = document.getElementById('answerContent');
+            if (answerContent) {
+                const cursor = answerContent.querySelector('.typing-cursor');
+                if (cursor) cursor.remove();
+            }
+        }
+
+        function displayResults(answer, sourcePairs) {
+            resultsContainer.innerHTML = '';
+
+            // Ответ
+            const answerCard = document.createElement('div');
+            answerCard.className = 'answer-card';
+            answerCard.innerHTML = `
+                <div class="answer-header">
+                    <span>💬</span>
+                    <span>Ответ AI Assistant</span>
+                </div>
+                <div class="answer-content">${answer}</div>
+            `;
+            resultsContainer.appendChild(answerCard);
+
+            // Источники
+            if (SHOW_SOURCES && sourcePairs.length > 0) {
+                displaySources(sourcePairs);
+            }
+        }
+
+        function displaySources(sourcePairs) {
+            let sourcesSection = document.getElementById('sourcesSection');
+            
+            if (!sourcesSection) {
+                sourcesSection = document.createElement('div');
+                sourcesSection.id = 'sourcesSection';
+                sourcesSection.className = 'source-pairs';
+                resultsContainer.appendChild(sourcesSection);
+            }
+
+            sourcesSection.innerHTML = `
+                <div class="source-pairs-header">
+                    <span>📚</span>
+                    <span>Источники из базы знаний (${sourcePairs.length})</span>
+                </div>
+            `;
+
+            sourcePairs.forEach((pair, index) => {
+                const sourceCard = document.createElement('div');
+                sourceCard.className = 'source-card';
+                sourceCard.innerHTML = `
+                    <div class="source-header">
+                        <span class="source-number">#${index + 1}</span>
+                        <span class="similarity-badge">${(pair.similarity_score * 100).toFixed(1)}% совпадение</span>
+                    </div>
+                    <div class="source-question">❓ ${pair.question}</div>
+                    <div class="source-answer">💡 ${pair.answer}</div>
+                `;
+                sourcesSection.appendChild(sourceCard);
+            });
+        }
+
+        function showError(message) {
+            resultsContainer.innerHTML = `
+                <div class="error-message">
+                    <strong>⚠️ Ошибка:</strong><br>
+                    ${message}
+                </div>
+            `;
+        }
+    </script>
+</body>
+</html>

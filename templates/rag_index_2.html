@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Assistant - Glassmorphism</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+            min-height: 100vh;
+            padding: 40px 20px;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* Animated background blobs */
+        .blob {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: 0.5;
+            animation: float 20s infinite ease-in-out;
+        }
+
+        .blob1 {
+            width: 400px;
+            height: 400px;
+            background: rgba(255, 255, 255, 0.3);
+            top: -100px;
+            left: -100px;
+            animation-delay: 0s;
+        }
+
+        .blob2 {
+            width: 500px;
+            height: 500px;
+            background: rgba(102, 126, 234, 0.3);
+            bottom: -150px;
+            right: -150px;
+            animation-delay: 5s;
+        }
+
+        .blob3 {
+            width: 300px;
+            height: 300px;
+            background: rgba(240, 147, 251, 0.3);
+            top: 50%;
+            left: 50%;
+            animation-delay: 10s;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            33% { transform: translate(50px, -50px) scale(1.1); }
+            66% { transform: translate(-50px, 50px) scale(0.9); }
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Glass card */
+        .glass-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border-radius: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            padding: 50px;
+            margin-bottom: 30px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .logo {
+            font-size: 4em;
+            margin-bottom: 10px;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            color: white;
+            margin-bottom: 10px;
+            font-weight: 700;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .header p {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 1.1em;
+        }
+
+        .input-container {
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        #questionInput {
+            width: 100%;
+            padding: 20px 25px;
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 20px;
+            color: white;
+            font-size: 1.1em;
+            resize: none;
+            transition: all 0.3s ease;
+        }
+
+        #questionInput::placeholder {
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        #questionInput:focus {
+            outline: none;
+            background: rgba(255, 255, 255, 0.25);
+            border-color: rgba(255, 255, 255, 0.5);
+            box-shadow: 0 0 30px rgba(255, 255, 255, 0.3);
+        }
+
+        #askButton {
+            width: 100%;
+            padding: 18px;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0.1));
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 20px;
+            color: white;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        #askButton:hover:not(:disabled) {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0.2));
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(255, 255, 255, 0.3);
+        }
+
+        #askButton:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .answer-card {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(15px);
+            border-radius: 25px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 30px;
+            margin-bottom: 20px;
+            animation: slideUp 0.5s ease;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .answer-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+            font-weight: 600;
+            color: white;
+        }
+
+        .answer-content {
+            color: rgba(255, 255, 255, 0.95);
+            line-height: 1.8;
+            font-size: 1.05em;
+            white-space: pre-wrap;
+        }
+
+        .source-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-left: 4px solid rgba(255, 255, 255, 0.5);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 15px;
+            transition: all 0.3s ease;
+        }
+
+        .source-card:hover {
+            background: rgba(255, 255, 255, 0.15);
+            transform: translateX(5px);
+        }
+
+        .source-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .source-number {
+            background: rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-weight: 600;
+        }
+
+        .similarity-badge {
+            background: linear-gradient(135deg, #00d2ff, #3a7bd5);
+            color: white;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: 600;
+        }
+
+        .source-question {
+            color: white;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .source-answer {
+            color: rgba(255, 255, 255, 0.85);
+            line-height: 1.6;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: white;
+        }
+
+        .spinner {
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-top: 3px solid white;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .typing-cursor {
+            display: inline-block;
+            width: 2px;
+            height: 1em;
+            background: white;
+            margin-left: 2px;
+            animation: blink 1s infinite;
+        }
+
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0; }
+        }
+
+        @media (max-width: 768px) {
+            .glass-card {
+                padding: 30px 20px;
+            }
+
+            .header h1 {
+                font-size: 2em;
+            }
+
+            .logo {
+                font-size: 3em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="blob blob1"></div>
+    <div class="blob blob2"></div>
+    <div class="blob blob3"></div>
+
+    <div class="container">
+        <div class="glass-card">
+            <div class="header">
+                <div class="logo">🤖</div>
+                <h1>AI Assistant</h1>
+                <p>Задайте вопрос и получите ответ на основе базы знаний</p>
+            </div>
+
+            <div class="input-container">
+                <textarea 
+                    id="questionInput" 
+                    placeholder="Введите ваш вопрос здесь..."
+                    rows="4"
+                ></textarea>
+            </div>
+
+            <button id="askButton">
+                <span id="buttonText">✨ Спросить</span>
+            </button>
+        </div>
+
+        <div id="resultsContainer"></div>
+    </div>
+
+    <script>
+        const questionInput = document.getElementById('questionInput');
+        const askButton = document.getElementById('askButton');
+        const buttonText = document.getElementById('buttonText');
+        const resultsContainer = document.getElementById('resultsContainer');
+        
+        const STREAMING_ENABLED = {{ streaming | tojson }};
+        const SHOW_SOURCES = {{ show_sources | tojson }};
+
+        questionInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && e.ctrlKey) {
+                e.preventDefault();
+                askQuestion();
+            }
+        });
+
+        askButton.addEventListener('click', askQuestion);
+
+        async function askQuestion() {
+            const question = questionInput.value.trim();
+            
+            if (!question) {
+                alert('Пожалуйста, введите вопрос');
+                return;
+            }
+
+            askButton.disabled = true;
+            buttonText.textContent = '⏳ Обработка...';
+            
+            resultsContainer.innerHTML = '<div class="glass-card loading"><div class="spinner"></div>Поиск релевантной информации...</div>';
+
+            try {
+                if (STREAMING_ENABLED) {
+                    await handleStreamingResponse(question);
+                } else {
+                    await handleRegularResponse(question);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showError('Произошла ошибка при обработке запроса: ' + error.message);
+            } finally {
+                askButton.disabled = false;
+                buttonText.textContent = '✨ Спросить';
+            }
+        }
+
+        async function handleRegularResponse(question) {
+            const response = await fetch('/api/ask', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ question: question })
+            });
+
+            const result = await response.json();
+
+            if (!result.success) {
+                showError(result.error || result.answer);
+                return;
+            }
+
+            displayResults(result.answer, result.source_pairs || []);
+        }
+
+        async function handleStreamingResponse(question) {
+            const response = await fetch('/api/ask_stream', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ question: question })
+            });
+
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
+            
+            let answerContent = '';
+            let sourcePairs = [];
+
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+
+                const chunk = decoder.decode(value);
+                const lines = chunk.split('\n');
+
+                for (const line of lines) {
+                    if (line.startsWith('data: ')) {
+                        const data = line.slice(6);
+                        
+                        if (data === '[DONE]') break;
+
+                        try {
+                            const parsed = JSON.parse(data);
+
+                            if (parsed.type === 'sources') {
+                                sourcePairs = parsed.data;
+                                if (SHOW_SOURCES) {
+                                    displaySources(sourcePairs);
+                                }
+                            } else if (parsed.type === 'answer_start') {
+                                displayAnswerStart();
+                            } else if (parsed.type === 'answer_chunk') {
+                                answerContent += parsed.data;
+                                updateAnswer(answerContent);
+                            } else if (parsed.type === 'answer_end') {
+                                finalizeAnswer();
+                            } else if (parsed.type === 'error') {
+                                showError(parsed.data);
+                            }
+                        } catch (e) {
+                            console.error('Parse error:', e);
+                        }
+                    }
+                }
+            }
+        }
+
+        function displayAnswerStart() {
+            const answerCard = document.createElement('div');
+            answerCard.className = 'glass-card answer-card';
+            answerCard.id = 'answerCard';
+            answerCard.innerHTML = `
+                <div class="answer-header">
+                    <span>💬</span>
+                    <span>Ответ AI Assistant</span>
+                </div>
+                <div class="answer-content" id="answerContent">
+                    <span class="typing-cursor"></span>
+                </div>
+            `;
+            
+            const sourcesSection = document.getElementById('sourcesSection');
+            if (sourcesSection) {
+                resultsContainer.insertBefore(answerCard, sourcesSection);
+            } else {
+                resultsContainer.innerHTML = '';
+                resultsContainer.appendChild(answerCard);
+            }
+        }
+
+        function updateAnswer(content) {
+            const answerContent = document.getElementById('answerContent');
+            if (answerContent) {
+                answerContent.innerHTML = content + '<span class="typing-cursor"></span>';
+            }
+        }
+
+        function finalizeAnswer() {
+            const answerContent = document.getElementById('answerContent');
+            if (answerContent) {
+                const cursor = answerContent.querySelector('.typing-cursor');
+                if (cursor) cursor.remove();
+            }
+        }
+
+        function displayResults(answer, sourcePairs) {
+            resultsContainer.innerHTML = '';
+
+            const answerCard = document.createElement('div');
+            answerCard.className = 'glass-card answer-card';
+            answerCard.innerHTML = `
+                <div class="answer-header">
+                    <span>💬</span>
+                    <span>Ответ AI Assistant</span>
+                </div>
+                <div class="answer-content">${answer}</div>
+            `;
+            resultsContainer.appendChild(answerCard);
+
+            if (SHOW_SOURCES && sourcePairs.length > 0) {
+                displaySources(sourcePairs);
+            }
+        }
+
+        function displaySources(sourcePairs) {
+            let sourcesSection = document.getElementById('sourcesSection');
+            
+            if (!sourcesSection) {
+                sourcesSection = document.createElement('div');
+                sourcesSection.id = 'sourcesSection';
+                sourcesSection.className = 'glass-card';
+                resultsContainer.appendChild(sourcesSection);
+            }
+
+            sourcesSection.innerHTML = `
+                <div class="answer-header">
+                    <span>📚</span>
+                    <span>Источники из базы знаний (${sourcePairs.length})</span>
+                </div>
+            `;
+
+            sourcePairs.forEach((pair, index) => {
+                const sourceCard = document.createElement('div');
+                sourceCard.className = 'source-card';
+                sourceCard.innerHTML = `
+                    <div class="source-header">
+                        <span class="source-number">#${index + 1}</span>
+                        <span class="similarity-badge">${(pair.similarity_score * 100).toFixed(1)}% совпадение</span>
+                    </div>
+                    <div class="source-question">❓ ${pair.question}</div>
+                    <div class="source-answer">💡 ${pair.answer}</div>
+                `;
+                sourcesSection.appendChild(sourceCard);
+            });
+        }
+
+        function showError(message) {
+            resultsContainer.innerHTML = `
+                <div class="glass-card" style="background: rgba(220, 53, 69, 0.2);">
+                    <div class="answer-header" style="color: white;">
+                        <span>⚠️</span>
+                        <span>Ошибка</span>
+                    </div>
+                    <div class="answer-content">${message}</div>
+                </div>
+            `;
+        }
+    </script>
+</body>
+</html>

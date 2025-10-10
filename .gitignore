@@ -11,8 +11,10 @@ venv/
 # Временные папки для обработки
 all_txt_test/
 all_txt_test_old/
+all_txt_test_old2/
 back/
 chat_lawyers/
+qdrant_storage/
 
 # Пакеты/сборки
 build/

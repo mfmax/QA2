@@ -1,0 +1,14 @@
+# 1. Сначала установим PyTorch (CPU версия)
+pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu
+
+# 2. Затем остальные пакеты
+pip install langchain langchain-community
+
+# 3. Qdrant
+pip install qdrant-client
+
+# 4. Sentence transformers
+pip install sentence-transformers
+
+# 5. Дополнительные
+pip install numpy scikit-learn

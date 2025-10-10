@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Assistant - Neomorphism</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #e0e5ec;
+            min-height: 100vh;
+            padding: 40px 20px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        /* Neomorphic card */
+        .neo-card {
+            background: #e0e5ec;
+            border-radius: 30px;
+            padding: 50px;
+            margin-bottom: 30px;
+            box-shadow: 
+                20px 20px 60px #bec3c9,
+                -20px -20px 60px #ffffff;
+        }
+
+        .neo-card-inset {
+            background: #e0e5ec;
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 20px;
+            box-shadow: 
+                inset 8px 8px 16px #bec3c9,
+                inset -8px -8px 16px #ffffff;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .logo-circle {
+            width: 120px;
+            height: 120px;
+            margin: 0 auto 20px;
+            background: #e0e5ec;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3em;
+            box-shadow: 
+                12px 12px 24px #bec3c9,
+                -12px -12px 24px #ffffff;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .header p {
+            color: #667eea;
+            font-size: 1.1em;
+            font-weight: 500;
+        }
+
+        #questionInput {
+            width: 100%;
+            padding: 20px 25px;
+            background: #e0e5ec;
+            border: none;
+            border-radius: 20px;
+            color: #4a5568;
+            font-size: 1.1em;
+            resize: none;
+            box-shadow: 
+                inset 6px 6px 12px #bec3c9,
+                inset -6px -6px 12px #ffffff;
+            transition: all 0.3s ease;
+            margin-bottom: 20px;
+        }
+
+        #questionInput:focus {
+            outline: none;
+            box-shadow: 
+                inset 8px 8px 16px #bec3c9,
+                inset -8px -8px 16px #ffffff;
+        }
+
+        #askButton {
+            width: 100%;
+            padding: 18px;
+            background: linear-gradient(145deg, #667eea, #764ba2);
+            border: none;
+            border-radius: 20px;
+            color: white;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 
+                8px 8px 16px #bec3c9,
+                -8px -8px 16px #ffffff;
+            position: relative;
+            overflow: hidden;
+        }
+
+        #askButton::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            transition: left 0.5s;
+        }
+
+        #askButton:hover:not(:disabled)::before {
+            left: 100%;
+        }
+
+        #askButton:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 
+                10px 10px 20px #bec3c9,
+                -10px -10px 20px #ffffff;
+        }
+
+        #askButton:active:not(:disabled) {
+            transform: translateY(0);
+            box-shadow: 
+                4px 4px 8px #bec3c9,
+                -4px -4px 8px #ffffff;
+        }
+
+        #askButton:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .answer-neo {
+            animation: slideIn 0.5s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .answer-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #e0e5ec;
+            border-radius: 15px;
+            box-shadow: 
+                6px 6px 12px #bec3c9,
+                -6px -6px 12px #ffffff;
+        }
+
+        .icon-circle {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(145deg, #667eea, #764ba2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5em;
+            color: white;
+            box-shadow: 
+                4px 4px 8px #bec3c9,
+                -4px -4px 8px #ffffff;
+        }
+
+        .answer-title {
+            font-size: 1.3em;
+            font-weight: 600;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .answer-content {
+            color: #4a5568;
+            line-height: 1.8;
+            font-size: 1.05em;
+            padding: 20px;
+            white-space: pre-wrap;
+        }
+
+        .source-neo {
+            background: #e0e5ec;
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 15px;
+            box-shadow: 
+                8px 8px 16px #bec3c9,
+                -8px -8px 16px #ffffff;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .source-neo::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 4px;
+            height: 100%;
+            background: linear-gradient(180deg, #667eea, #764ba2);
+        }
+
+        .source-neo:hover {
+            transform: translateX(5px);
+        }
+
+        .source-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .source-number {
+            background: linear-gradient(145deg, #667eea, #764ba2);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 15px;
+            font-weight: 600;
+            box-shadow: 
+                4px 4px 8px #bec3c9,
+                -4px -4px 8px #ffffff;
+        }
+
+        .similarity-badge {
+            background: #e0e5ec;
+            padding: 8px 16px;
+            border-radius: 15px;
+            font-weight: 600;
+            color: #667eea;
+            box-shadow: 
+                inset 4px 4px 8px #bec3c9,
+                inset -4px -4px 8px #ffffff;
+        }
+
+        .source-question {
+            color: #2d3748;
+            font-weight: 600;
+            margin-bottom: 10px;
+            padding-left: 10px;
+        }
+
+        .source-answer {
+            color: #4a5568;
+            line-height: 1.6;
+            padding-left: 10px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+        }
+
+        .spinner-neo {
+            width: 60px;
+            height: 60px;
+            margin: 0 auto 20px;
+            background: #e0e5ec;
+            border-radius: 50%;
+            position: relative;
+            box-shadow: 
+                12px 12px 24px #bec3c9,
+                -12px -12px 24px #ffffff;
+        }
+
+        .spinner-neo::after {
+            content: '';
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            top: 5px;
+            left: 5px;
+            border-radius: 50%;
+            border: 3px solid transparent;
+            border-top-color: #667eea;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: 600;
+            font-size: 1.1em;
+        }
+
+        @media (max-width: 768px) {
+            .neo-card {
+                padding: 30px 20px;
+            }
+
+            .header h1 {
+                font-size: 2em;
+            }
+
+            .logo-circle {
+                width: 100px;
+                height: 100px;
+                font-size: 2.5em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="neo-card">
+            <div class="header">
+                <div class="logo-circle">🤖</div>
+                <h1>AI Assistant</h1>
+                <p>Умный помощник для ответов на ваши вопросы</p>
+            </div>
+
+            <textarea 
+                id="questionInput" 
+                placeholder="Введите ваш вопрос..."
+                rows="4"
+            ></textarea>
+
+            <button id="askButton">
+                <span id="buttonText">Спросить AI</span>
+            </button>
+        </div>
+
+        <div id="resultsContainer"></div>
+    </div>
+
+    <script>
+        const questionInput = document.getElementById('questionInput');
+        const askButton = document.getElementById('askButton');
+        const buttonText = document.getElementById('buttonText');
+        const resultsContainer = document.getElementById('resultsContainer');
+        
+        const STREAMING_ENABLED = {{ streaming | tojson }};
+        const SHOW_SOURCES = {{ show_sources | tojson }};
+
+        questionInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && e.ctrlKey) {
+                e.preventDefault();
+                askQuestion();
+            }
+        });
+
+        askButton.addEventListener('click', askQuestion);
+
+        async function askQuestion() {
+            const question = questionInput.value.trim();
+            
+            if (!question) {
+                alert('Пожалуйста, введите вопрос');
+                return;
+            }
+
+            askButton.disabled = true;
+            buttonText.textContent = 'Обрабатываю...';
+            
+            // Очищаем результаты, но НЕ показываем карточку загрузки
+            resultsContainer.innerHTML = '';
+
+            try {
+                if (STREAMING_ENABLED) {
+                    await handleStreamingResponse(question);
+                } else {
+                    await handleRegularResponse(question);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showError('Произошла ошибка: ' + error.message);
+            } finally {
+                askButton.disabled = false;
+                buttonText.textContent = 'Спросить AI';
+            }
+        }
+
+        async function handleRegularResponse(question) {
+            const response = await fetch('/api/ask', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ question: question })
+            });
+            const result = await response.json();
+            if (!result.success) {
+                showError(result.error || result.answer);
+                return;
+            }
+            displayResults(result.answer, result.source_pairs || []);
+        }
+
+        async function handleStreamingResponse(question) {
+            const response = await fetch('/api/ask_stream', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ question: question })
+            });
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
+            let answerContent = '';
+            let sourcePairs = [];
+
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+                const chunk = decoder.decode(value);
+                const lines = chunk.split('\n');
+
+                for (const line of lines) {
+                    if (line.startsWith('data: ')) {
+                        const data = line.slice(6);
+                        if (data === '[DONE]') break;
+                        try {
+                            const parsed = JSON.parse(data);
+                            if (parsed.type === 'sources') {
+                                sourcePairs = parsed.data;
+                                if (SHOW_SOURCES) displaySources(sourcePairs);
+                            } else if (parsed.type === 'answer_start') {
+                                displayAnswerStart();
+                            } else if (parsed.type === 'answer_chunk') {
+                                answerContent += parsed.data;
+                                updateAnswer(answerContent);
+                            } else if (parsed.type === 'answer_end') {
+                                finalizeAnswer();
+                            } else if (parsed.type === 'error') {
+                                showError(parsed.data);
+                            }
+                        } catch (e) {}
+                    }
+                }
+            }
+        }
+
+        function displayAnswerStart() {
+            const answerCard = document.createElement('div');
+            answerCard.className = 'neo-card answer-neo';
+            answerCard.id = 'answerCard';
+            answerCard.innerHTML = `
+                <div class="answer-header">
+                    <div class="icon-circle">💬</div>
+                    <div class="answer-title">Ответ</div>
+                </div>
+                <div class="neo-card-inset">
+                    <div class="answer-content" id="answerContent"></div>
+                </div>
+            `;
+            
+            // Вставляем перед источниками если они есть
+            const sourcesSection = document.getElementById('sourcesSection');
+            if (sourcesSection) {
+                resultsContainer.insertBefore(answerCard, sourcesSection);
+            } else {
+                resultsContainer.appendChild(answerCard);
+            }
+        }
+
+        function updateAnswer(content) {
+            const answerContent = document.getElementById('answerContent');
+            if (answerContent) answerContent.textContent = content;
+        }
+
+        function finalizeAnswer() {}
+
+        function displayResults(answer, sourcePairs) {
+            resultsContainer.innerHTML = '';
+            const answerCard = document.createElement('div');
+            answerCard.className = 'neo-card answer-neo';
+            answerCard.innerHTML = `
+                <div class="answer-header">
+                    <div class="icon-circle">💬</div>
+                    <div class="answer-title">Ответ</div>
+                </div>
+                <div class="neo-card-inset">
+                    <div class="answer-content">${answer}</div>
+                </div>
+            `;
+            resultsContainer.appendChild(answerCard);
+            if (SHOW_SOURCES && sourcePairs.length > 0) displaySources(sourcePairs);
+        }
+
+        function displaySources(sourcePairs) {
+            let sourcesSection = document.getElementById('sourcesSection');
+            
+            if (!sourcesSection) {
+                sourcesSection = document.createElement('div');
+                sourcesSection.id = 'sourcesSection';
+                sourcesSection.className = 'neo-card';
+                
+                // Добавляем после карточки с ответом если она есть
+                const answerCard = document.getElementById('answerCard');
+                if (answerCard) {
+                    answerCard.after(sourcesSection);
+                } else {
+                    resultsContainer.appendChild(sourcesSection);
+                }
+            }
+            
+            sourcesSection.innerHTML = `
+                <div class="answer-header">
+                    <div class="icon-circle">📚</div>
+                    <div class="answer-title">Источники (${sourcePairs.length})</div>
+                </div>
+            `;
+            
+            sourcePairs.forEach((pair, index) => {
+                const sourceCard = document.createElement('div');
+                sourceCard.className = 'source-neo';
+                sourceCard.innerHTML = `
+                    <div class="source-header">
+                        <span class="source-number">#${index + 1}</span>
+                        <span class="similarity-badge">${(pair.similarity_score * 100).toFixed(1)}%</span>
+                    </div>
+                    <div class="source-question">❓ ${pair.question}</div>
+                    <div class="source-answer">💡 ${pair.answer}</div>
+                `;
+                sourcesSection.appendChild(sourceCard);
+            });
+        }
+
+        function showError(message) {
+            resultsContainer.innerHTML = `
+                <div class="neo-card">
+                    <div class="answer-header">
+                        <div class="icon-circle" style="background: linear-gradient(145deg, #dc3545, #c82333);">⚠️</div>
+                        <div class="answer-title" style="background: linear-gradient(135deg, #dc3545 0%, #c82333 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Ошибка</div>
+                    </div>
+                    <div class="neo-card-inset">
+                        <div class="answer-content">${message}</div>
+                    </div>
+                </div>
+            `;
+        }
+    </script>
+</body>
+</html>
