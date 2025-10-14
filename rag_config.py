@@ -18,13 +18,13 @@ EMBEDDING_DEVICE = "cpu"  # Или "cuda" если есть GPU
 EMBEDDING_BATCH_SIZE = 16
 
 # === Retrieval Settings ===
-TOP_K_RESULTS = 7  # Количество наиболее релевантных пар для поиска
+TOP_K_RESULTS = 8  # Количество наиболее релевантных пар для поиска
 SIMILARITY_THRESHOLD = 0.0  # Минимальный порог схожести (0.0-1.0)
 
 # === OpenAI Settings ===
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 OPENAI_MODEL = "gpt-4o-mini"
-OPENAI_TEMPERATURE = 0.3
+OPENAI_TEMPERATURE = 0.4
 OPENAI_MAX_TOKENS = 1000
 
 # === Streaming Settings ===
