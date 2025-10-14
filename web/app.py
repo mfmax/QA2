@@ -279,5 +279,39 @@ def toggle_irrelevant(pair_id):
         return jsonify({'error': str(e)}), 500
 
 
+@app.route('/api/update_answer/<int:pair_id>', methods=['POST'])
+def update_answer(pair_id):
+    """API для обновления ответа"""
+    try:
+        data = request.get_json()
+        new_answer = data.get('answer', '').strip()
+        
+        if not new_answer:
+            return jsonify({'error': 'Ответ не может быть пустым'}), 400
+        
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        # Обновляем ответ и автоматически помечаем как проверенный
+        cursor.execute("""
+            UPDATE qa_pairs 
+            SET answer = ?, is_audited = 1, is_irrelevant = 0
+            WHERE id = ?
+        """, (new_answer, pair_id))
+        
+        conn.commit()
+        conn.close()
+        
+        return jsonify({
+            'success': True, 
+            'answer': new_answer,
+            'is_audited': 1,
+            'is_irrelevant': 0
+        })
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)

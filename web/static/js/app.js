@@ -1,3 +1,6 @@
+// Глобальная переменная для отслеживания редактируемой ячейки
+let currentlyEditing = null;
+
 // Глобальная функция для переключения аудита (левая кнопка)
 async function toggleAudit(pairId, rowElement) {
     try {
@@ -84,6 +87,144 @@ async function toggleIrrelevant(pairId, rowElement) {
     }
 }
 
+// Функция редактирования ответа (Ctrl+клик)
+function startEditAnswer(pairId, answerCell, rowElement) {
+    // Если уже редактируем другую ячейку, сохраняем её
+    if (currentlyEditing && currentlyEditing !== answerCell) {
+        saveEdit();
+    }
+    
+    // Если уже редактируем эту ячейку, ничего не делаем
+    if (currentlyEditing === answerCell) {
+        return;
+    }
+    
+    currentlyEditing = answerCell;
+    const originalText = answerCell.textContent;
+    
+    // Создаём textarea для редактирования
+    const textarea = document.createElement('textarea');
+    textarea.value = originalText;
+    textarea.className = 'edit-textarea';
+    textarea.style.width = '100%';
+    textarea.style.minHeight = '80px';
+    textarea.style.padding = '8px';
+    textarea.style.fontSize = '1em';
+    textarea.style.fontFamily = 'inherit';
+    textarea.style.border = '2px solid #667eea';
+    textarea.style.borderRadius = '5px';
+    textarea.style.resize = 'vertical';
+    
+    // Сохраняем оригинальный текст и ID
+    textarea.dataset.originalText = originalText;
+    textarea.dataset.pairId = pairId;
+    textarea.dataset.rowElement = rowElement;
+    
+    // Заменяем содержимое ячейки
+    answerCell.innerHTML = '';
+    answerCell.appendChild(textarea);
+    
+    // Фокус на textarea
+    textarea.focus();
+    textarea.select();
+    
+    // Обработчик потери фокуса - автосохранение
+    textarea.addEventListener('blur', function() {
+        setTimeout(() => saveEdit(), 100);
+    });
+    
+    // ESC для отмены
+    textarea.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            e.preventDefault();
+            cancelEdit();
+        }
+    });
+}
+
+// Сохранение изменений
+async function saveEdit() {
+    if (!currentlyEditing) return;
+    
+    const textarea = currentlyEditing.querySelector('textarea');
+    if (!textarea) return;
+    
+    const newText = textarea.value.trim();
+    const originalText = textarea.dataset.originalText;
+    const pairId = textarea.dataset.pairId;
+    
+    // Если текст не изменился, просто отменяем редактирование
+    if (newText === originalText) {
+        cancelEdit();
+        return;
+    }
+    
+    // Если текст пустой, не сохраняем
+    if (!newText) {
+        alert('Ответ не может быть пустым');
+        textarea.focus();
+        return;
+    }
+    
+    try {
+        const response = await fetch('/api/update_answer/' + pairId, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ answer: newText })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            // Обновляем текст в ячейке
+            currentlyEditing.textContent = data.answer;
+            
+            // Получаем строку
+            const row = currentlyEditing.closest('.qa-row');
+            
+            // Обновляем статусы
+            const wasAudited = row.classList.contains('audited');
+            const wasIrrelevant = row.classList.contains('irrelevant');
+            
+            // Автоматически помечаем как проверенный
+            row.classList.add('audited');
+            row.classList.remove('irrelevant');
+            row.querySelector('.audit-star').textContent = '⭐';
+            
+            // Обновляем счётчики
+            if (!wasAudited) {
+                updateCounter('audited', 1);
+            }
+            if (wasIrrelevant) {
+                updateCounter('irrelevant', -1);
+            }
+            
+            currentlyEditing = null;
+        } else {
+            alert('Ошибка сохранения: ' + (data.error || 'Неизвестная ошибка'));
+        }
+        
+    } catch (error) {
+        console.error('Ошибка:', error);
+        alert('Не удалось сохранить изменения');
+    }
+}
+
+// Отмена редактирования
+function cancelEdit() {
+    if (!currentlyEditing) return;
+    
+    const textarea = currentlyEditing.querySelector('textarea');
+    if (textarea) {
+        const originalText = textarea.dataset.originalText;
+        currentlyEditing.textContent = originalText;
+    }
+    
+    currentlyEditing = null;
+}
+
 // Функция обновления счётчиков
 function updateCounter(type, delta) {
     let counterElement;
@@ -163,7 +304,7 @@ function setupRowClickHandlers() {
             return false;
         });
         
-        // Обработчик левого клика
+        // Обработчик левого клика И Ctrl+клик
         row.addEventListener('click', function(e) {
             // Игнорируем если это был правый клик
             if (e.button !== 0) return;
@@ -171,6 +312,18 @@ function setupRowClickHandlers() {
             e.preventDefault();
             e.stopPropagation();
             const pairId = this.getAttribute('data-id');
+            
+            // Ctrl+клик на ячейке ответа = редактирование
+            if (e.ctrlKey || e.metaKey) {
+                const answerCell = e.target.closest('.text-cell');
+                // Проверяем что это именно ячейка ответа (третья колонка)
+                if (answerCell && answerCell.cellIndex === 2) {
+                    startEditAnswer(pairId, answerCell, this);
+                    return;
+                }
+            }
+            
+            // Обычный клик = переключение аудита
             toggleAudit(pairId, this);
         });
         
