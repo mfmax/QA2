@@ -36,6 +36,14 @@ MIN_QUALITY_SCORE = 6.0   # минимальная средняя оценка (
 LOG_LEVEL = "DEBUG"  # DEBUG, INFO, WARNING, ERROR - временно для отладки
 LOG_FORMAT = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 
+# === Telegram Settings ===
+TELEGRAM_API_ID = os.getenv("TELEGRAM_API_ID")  # Получить на https://my.telegram.org/apps
+TELEGRAM_API_HASH = os.getenv("TELEGRAM_API_HASH")
+TELEGRAM_PHONE = os.getenv("TELEGRAM_PHONE")  # Формат: +79001234567
+TELEGRAM_CHAT = os.getenv("TELEGRAM_CHAT")  # username группы или ID
+# Bot API (python-telegram-bot) - для real-time мониторинга (рекомендуется)
+TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")  # Получить у @BotFather
+
 # === CLI ===
 SHOW_PROGRESS_BAR = True
 BATCH_SIZE = 1  # файлов за раз (для будущего расширения)

@@ -10,11 +10,13 @@ venv/
 
 # Временные папки для обработки
 all_txt_test/
-all_txt_test_old/
-all_txt_test_old2/
+all_txt_test_2/
+all_txt_test_3/
 back/
-chat_lawyers/
+migration/
 qdrant_storage/
+.claude/
+doc/
 
 # Пакеты/сборки
 build/
@@ -44,3 +46,8 @@ htmlcov/
 *.secret
 *.db
 *.md
+
+# Telegram сессии
+*.session
+*.session-journal
+*.service

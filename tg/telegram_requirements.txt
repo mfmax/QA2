@@ -1,0 +1,5 @@
+
+# Telegram мониторинг
+telethon>=1.34.0
+cryptg>=0.4.0  # Опционально, для ускорения
+python-telegram-bot>=20.7
